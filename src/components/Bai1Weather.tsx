@@ -6,6 +6,17 @@ function Bai1Weather() {
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState<string>("");
 
+  // Hàm loại bỏ dấu tiếng Việt và chuyển về chữ thường
+  const normalizeCityName = (str: string) => {
+    return str
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/đ/g, "d")
+      .replace(/Đ/g, "D")
+      .trim()
+      .toLowerCase();
+  };
+
   const getWeather = async () => {
     if (!city.trim()) {
       setError("Vui lòng nhập tên thành phố!");
@@ -14,14 +25,12 @@ function Bai1Weather() {
     }
 
     try {
-      // ✅ Dùng proxy miễn phí để tránh lỗi CORS
+      const cleanCity = normalizeCityName(city);
       const proxy = "https://api.allorigins.win/get?url=";
-      const url = `https://wttr.in/${city}?format=j1`;
+      const url = `https://wttr.in/${encodeURIComponent(cleanCity)}?format=j1`;
       const res = await axios.get(`${proxy}${encodeURIComponent(url)}`);
 
-      // API allorigins bọc dữ liệu thật trong res.data.contents
       const result = JSON.parse(res.data.contents);
-
       setData(result);
       setError("");
     } catch (e) {
@@ -51,20 +60,12 @@ function Bai1Weather() {
 
       {data && (
         <div style={{ marginTop: "20px", lineHeight: "1.6" }}>
-          <h3>{city.toUpperCase()}</h3>
           <p>
             <strong>Nhiệt độ:</strong> {data.current_condition[0].temp_C}°C
           </p>
           <p>
             <strong>Thời tiết:</strong>{" "}
             {data.current_condition[0].weatherDesc[0].value}
-          </p>
-          <p>
-            <strong>Độ ẩm:</strong> {data.current_condition[0].humidity}%
-          </p>
-          <p>
-            <strong>Tốc độ gió:</strong>{" "}
-            {data.current_condition[0].windspeedKmph} km/h
           </p>
         </div>
       )}
